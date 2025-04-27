@@ -1,0 +1,36 @@
+name: Manual Build
+
+on:
+  workflow_dispatch # 允许手动触发 workflow
+
+jobs:
+  build:
+    runs-on: windows-latest # 在最新的 Windows 环境中运行
+
+    strategy:
+      matrix:
+        platform: [x86, x64, arm64] # 定义需要编译的平台
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 # 检出代码
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4 # 安装 .NET SDK
+      with:
+        dotnet-version: '8.x' # 使用 .NET 8 LTS 版本
+
+    - name: Restore dependencies
+      run: dotnet restore src/Lively/Lively.sln # 恢复项目依赖
+
+    - name: Clean solution ${{ matrix.platform }}
+      run: dotnet clean src/Lively/Lively.sln --configuration Release -p:Platform=${{ matrix.platform }} # 清理指定平台的解决方案
+
+    - name: Build solution ${{ matrix.platform }}
+      run: dotnet build src/Lively/Lively.sln --no-restore --configuration Release -p:Platform=${{ matrix.platform }} # 构建指定平台的解决方案
+
+    - name: Upload build artifacts ${{ matrix.platform }}
+      uses: actions/upload-artifact@v4 # 上传编译结果
+      with:
+        name: lively-build-outputs-${{ matrix.platform }} # Artifact 名称包含平台信息
+        path: src/Lively/*/bin/Release/ # 编译结果路径
