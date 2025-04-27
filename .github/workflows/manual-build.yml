@@ -41,7 +41,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK
       with:
-        dotnet-version: '9.x' # 使用 .NET 9 版本
+        dotnet-version: '8.x' # 使用 .NET 8 版本 (临时切换以排除 9.x 问题)
 
     - name: Restore dependencies
       run: dotnet restore src/Lively/Lively.sln # 恢复项目依赖
