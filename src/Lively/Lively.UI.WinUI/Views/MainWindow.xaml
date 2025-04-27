@@ -69,11 +69,12 @@
         </Grid.Resources>
 
         <Interactivity:Interaction.Behaviors>
-            <!--  Wait for INavigator.Frame to be initialized  -->
-            <Core:EventTriggerBehavior EventName="Loaded">
+            <!-- Wait for INavigator.Frame to be initialized -->
+            <Interactivity:EventTriggerBehavior EventName="Loaded">
                 <Core:InvokeCommandAction Command="{Binding OpenHomeCommand}" />
-            </Core:EventTriggerBehavior>
+            </Interactivity:EventTriggerBehavior>
         </Interactivity:Interaction.Behaviors>
+
 
         <!--  Custom background  -->
         <Image

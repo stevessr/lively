@@ -7,7 +7,7 @@ using Lively.Gallery.Client;
 using Lively.Grpc.Client;
 using Lively.Models;
 using Lively.Models.Enums;
-using Lively.Models.Exceptions;
+//using Lively.Models.Exceptions;
 using Lively.Models.Services;
 using Lively.Models.UserControls;
 using Lively.UI.WinUI.Factories;
@@ -83,8 +83,8 @@ namespace Lively.UI.Shared.ViewModels
             _ = SetAppTheme(userSettings.Settings.ApplicationThemeBackground);
             _ = GalleryInit();
 
-            if (!desktopCore.IsCoreInitialized)
-                ShowError(new WorkerWException(i18n.GetString("LivelyExceptionWorkerWSetupFail")));
+            if (!desktopCore.IsCoreInitialized) ;
+                //ShowError(new WorkerWException(i18n.GetString("LivelyExceptionWorkerWSetupFail")));
         }
 
         [ObservableProperty]

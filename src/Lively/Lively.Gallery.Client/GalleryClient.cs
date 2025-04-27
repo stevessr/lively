@@ -5,6 +5,8 @@ using Lively.Models.Gallery.API;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net;
+using WatsonWebserver;
+using WatsonWebserver.Core;
 
 namespace Lively.Gallery.Client
 {
@@ -38,7 +40,14 @@ namespace Lively.Gallery.Client
         public event EventHandler<object> LoggedIn;
         public event EventHandler<object> LoggedOut;
 
-        private WatsonWebserver.Server _server;
+        private WatsonWebserver.Webserver _server;
+
+        private async Task DefaultRoute(HttpContextBase ctx)
+        {
+            ctx.Response.StatusCode = 404;
+            await ctx.Response.Send("Not Found");
+        }
+
 
         public async Task InitializeAsync()
         {
@@ -52,14 +61,14 @@ namespace Lively.Gallery.Client
         #region Users
         public async Task<ProfileDto> GetMeAsync()
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, "users/@me");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "users/@me");
             var result = await SendAsync<ProfileDto>(message);
             return result.Data;
         }
 
         public async Task<string?> DeleteAccountAsync()
         {
-            var message = new HttpRequestMessage(HttpMethod.Delete, "users/@me");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Delete, "users/@me");
             var result = await SendAsync<object?>(message);
             var error = result.Errors?.FirstOrDefault();
             if (error == null)
@@ -79,14 +88,19 @@ namespace Lively.Gallery.Client
                 _server = null;
             }
 
-            _server = new WatsonWebserver.Server("127.0.0.1", 43821, false);
+
+            // With the corrected instantiation:  
+            var settings = new WebserverSettings("127.0.0.1", 43821);
+            _server = new Webserver(settings, DefaultRoute);
+
+            // 添加静态路由到 PreAuthentication 阶段
             switch (provider.ToUpperInvariant())
             {
                 case "GITHUB":
-                    _server.Routes.Static.Add(WatsonWebserver.HttpMethod.GET, "signin-oidc-github", GithubCallback);
+                    _server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "signin-oidc-github", GithubCallback);
                     break;
                 case "GOOGLE":
-                    _server.Routes.Static.Add(WatsonWebserver.HttpMethod.GET, "signin-oidc", GoogleCallback);
+                    _server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "signin-oidc", GoogleCallback);
                     break;
             }
             _server.Start();
@@ -113,7 +127,7 @@ namespace Lively.Gallery.Client
             return _oneTimeAuthCode;
         }
 
-        private async Task GithubCallback(WatsonWebserver.HttpContext ctx)
+        private async Task GithubCallback(HttpContextBase ctx)
         {
             var code = ctx.Request.Query.Elements["code"];
             ctx.Response.StatusCode = 200;
@@ -121,9 +135,10 @@ namespace Lively.Gallery.Client
             _oneTimeAuthCode = code;
             _slim.Set();
         }
+
         public async Task<TokensModel> AuthenticateGoogleAsync(string googleCode)
         {
-            var message = new HttpRequestMessage(HttpMethod.Post, $"auth/google-token?code={googleCode}&provider=GOOGLE");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, $"auth/google-token?code={googleCode}&provider=GOOGLE");
             var result = await SendAsync<TokensModel>(message, false);
 
             var tokens = result.Data;
@@ -137,7 +152,7 @@ namespace Lively.Gallery.Client
         }
         public async Task<TokensModel> AuthenticateGithubAsync(string githubCode)
         {
-            var message = new HttpRequestMessage(HttpMethod.Post, $"auth/google-token?code={githubCode}&provider=GITHUB");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, $"auth/google-token?code={githubCode}&provider=GITHUB");
             var result = await SendAsync<TokensModel>(message, false);
 
             var tokens = result.Data;
@@ -154,7 +169,7 @@ namespace Lively.Gallery.Client
         {
             if (Tokens?.AccessToken == null || Tokens?.RefreshToken == null)
                 throw new UnauthorizedAccessException("Couldn't refresh tokens. You have to log in again");
-            var message = new HttpRequestMessage(HttpMethod.Post, "auth/refresh")
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, "auth/refresh")
                 .WithJsonContent(Tokens);
             var result = await SendAsync<TokensModel>(message, false, true);
             return result.Data;
@@ -162,7 +177,7 @@ namespace Lively.Gallery.Client
 
         public async Task<bool> LogoutAsync()
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, "auth/logout");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "auth/logout");
             var result = await SendAsync<object?>(message);
             CurrentUser = null;
             _tokenStore.Set(null, null, null, DateTime.MinValue);
@@ -173,13 +188,13 @@ namespace Lively.Gallery.Client
         #region Gallery
         public async Task DownloadWallpaperAsync(string id, string fileName, CancellationToken ct, Action<float, float, float> progressCallback = null)
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, $"gallery/{id}/download");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, $"gallery/{id}/download");
             await DownloadFile(message, fileName, ct, true, progressCallback);
         }
 
         public async Task<WallpaperDto> UploadWallpaperAsync(FileStream stream)
         {
-            var message = new HttpRequestMessage(HttpMethod.Post, "gallery");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, "gallery");
             var form = new MultipartFormDataContent();
             var file = new StreamContent(stream);
             file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/zip");
@@ -191,7 +206,7 @@ namespace Lively.Gallery.Client
 
         public async Task<WallpaperDto> GetWallpaperInfoAsync(string id)
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, $"gallery/{id}");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, $"gallery/{id}");
             var response = await SendAsync<WallpaperDto>(message);
             response.Data.Preview = response.Data.IsPreviewAvailable ? $"{Host}gallery/{response.Data.Id}/preview" : null;
             response.Data.Thumbnail = $"{Host}gallery/{response.Data.Id}/thumbnail";
@@ -208,7 +223,7 @@ namespace Lively.Gallery.Client
                 uri += $"&query={searchQuery.Name}";
             if (searchQuery.Tags != null)
                 uri += $"&tags={string.Join(",", searchQuery.Tags)}";
-            var message = new HttpRequestMessage(HttpMethod.Get, uri);
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, uri);
             var response = await SendAsync<Page<WallpaperDto>>(message);
             foreach (var item in response.Data.Data)
             {
@@ -222,7 +237,7 @@ namespace Lively.Gallery.Client
         #region Wallpaper Subscriptions
         public async Task<List<WallpaperDto>> GetWallpaperSubscriptions()
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, $"users/@me/wallpapers");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, $"users/@me/wallpapers");
             var result = await SendAsync<List<WallpaperDto>>(message);
             foreach (var item in result.Data)
             {
@@ -237,7 +252,7 @@ namespace Lively.Gallery.Client
         {
             try
             {
-                var message = new HttpRequestMessage(HttpMethod.Put, $"users/@me/wallpapers/{id}");
+                var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Put, $"users/@me/wallpapers/{id}");
                 var result = await SendAsync<object?>(message);
                 WallpaperSubscribed?.Invoke(this, id);
                 return result.Success;
@@ -254,7 +269,7 @@ namespace Lively.Gallery.Client
 
         public async Task<bool> UnsubscribeFromWallpaperAsync(string id)
         {
-            var message = new HttpRequestMessage(HttpMethod.Delete, $"users/@me/wallpapers/{id}");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Delete, $"users/@me/wallpapers/{id}");
             var result = await SendAsync<object?>(message);
             WallpaperUnsubscribed?.Invoke(this, id);
             return result.Success;
@@ -263,7 +278,7 @@ namespace Lively.Gallery.Client
         #region Other
         public async Task<HealthResult> GetBackendHealthAsync()
         {
-            var message = new HttpRequestMessage(HttpMethod.Get, "health");
+            var message = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, "health");
             var result = await _client.SendAsync(message);
             if (!result.IsSuccessStatusCode)
                 return null;
@@ -393,7 +408,7 @@ namespace Lively.Gallery.Client
         //    }
         //}
 
-        private async Task GoogleCallback(WatsonWebserver.HttpContext ctx)
+        private async Task GoogleCallback(HttpContextBase ctx)
         {
             var code = ctx.Request.Query.Elements["code"];
             ctx.Response.StatusCode = 200;

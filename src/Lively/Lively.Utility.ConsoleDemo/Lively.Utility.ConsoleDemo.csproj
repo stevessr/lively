@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Buffers" Version="4.6.1" />
+    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="System.Private.Uri" Version="4.3.2" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="Watson" Version="6.3.9" />
+    <PackageReference Include="Watson.Lite" Version="6.3.9" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Lively.Grpc.Client\Lively.Grpc.Client.csproj" />
     <ProjectReference Include="..\Lively.Grpc.Common\Lively.Grpc.Common.csproj" />
     <ProjectReference Include="..\Lively.Models\Lively.Models.csproj" />
