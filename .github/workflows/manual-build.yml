@@ -21,6 +21,9 @@ jobs:
             rid: linux-arm64
 
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK
       with:
