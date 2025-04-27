@@ -37,7 +37,7 @@ jobs:
         dotnet-version: '8.x' # 使用 .NET 8 版本 (临时切换以排除 9.x 问题)
 
     - name: Restore dependencies
-      run: dotnet restore src/Lively/Lively.sln # 恢复项目依赖
+      run: dotnet restore src/Lively/Lively.sln -v d # 恢复项目依赖，增加详细日志
 
     - name: Clean solution ${{ matrix.rid }}
       run: dotnet clean src/Lively/Lively.sln --configuration Release -r ${{ matrix.rid }} # 清理指定 RID 的解决方案
