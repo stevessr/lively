@@ -34,10 +34,13 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK
       with:
-        dotnet-version: '8.x' # 使用 .NET 8 版本 (临时切换以排除 9.x 问题)
+        dotnet-version: '8.0.x' # 使用 .NET 8.0.x 版本
+
+    - name: Clean NuGet cache
+      run: dotnet nuget locals all --clear # 清理所有 NuGet 缓存
 
     - name: Restore dependencies
-      run: dotnet restore src/Lively/Lively.sln -v d # 恢复项目依赖，增加详细日志
+      run: dotnet restore src/Lively/Lively.sln -v d --interactive false # 恢复项目依赖，增加详细日志，禁用交互模式
 
     - name: Clean solution ${{ matrix.rid }}
       run: dotnet clean src/Lively/Lively.sln --configuration Release -r ${{ matrix.rid }} # 清理指定 RID 的解决方案
