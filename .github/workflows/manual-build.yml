@@ -40,6 +40,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4 # 检出代码
+      with:
+        sparse-checkout: false
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK

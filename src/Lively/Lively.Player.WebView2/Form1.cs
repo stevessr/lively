@@ -117,7 +117,8 @@ namespace Lively.Player.WebView2
             webView.CoreWebView2InitializationCompleted += WebView_CoreWebView2InitializationCompleted;
 
             // Ref: https://docs.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder
-            CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions("--disk-cache-size=1"); //workaround: avoid cache
+            CoreWebView2EnvironmentOptions options = new CoreWebView2EnvironmentOptions();
+            options.AdditionalBrowserArguments = "--enable-features=WebAuthentication";
             var userDataPath = Path.Combine(Constants.CommonPaths.TempWebView2Dir, Assembly.GetExecutingAssembly().GetName().Name);
             var env = await CoreWebView2Environment.CreateAsync(null, userDataPath, options);
             await webView.EnsureCoreWebView2Async(env);
