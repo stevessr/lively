@@ -28,12 +28,6 @@
     <PackageReference Include="Watson.Lite" Version="6.3.9" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="Com\ApplicationActivationManager.cs" />
-    <Compile Include="Com\IApplicationActivationManager.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\icon.ico" />
