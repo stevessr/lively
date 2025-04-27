@@ -12,16 +12,6 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         arch: [x64, arm64]
         include:
-          # Windows builds
-          - os: windows-latest
-            arch: x86
-            rid: win-x86
-          - os: windows-latest
-            arch: x64
-            rid: win-x64
-          - os: windows-latest
-            arch: arm64
-            rid: win-arm64
           # Linux builds
           - os: ubuntu-latest
             arch: x64
@@ -29,28 +19,21 @@ jobs:
           - os: ubuntu-latest
             arch: arm64
             rid: linux-arm64
-          # macOS builds
-          - os: macos-latest
-            arch: x64
-            rid: osx-x64
-          - os: macos-latest
-            arch: arm64
-            rid: osx-arm64
 
     steps:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK
       with:
-        dotnet-version: '8.x' # 使用 .NET 8 版本 (临时切换以排除 9.x 问题)
+        dotnet-version: '9.x' # 使用 .NET 8 版本 (临时切换以排除 9.x 问题)
 
     - name: Restore dependencies
-      run: dotnet restore src/Lively/Lively.sln # 恢复项目依赖
+      run: dotnet restore src/Lively.sln # 恢复项目依赖
 
     - name: Clean solution ${{ matrix.rid }}
-      run: dotnet clean src/Lively/Lively.sln --configuration Release -r ${{ matrix.rid }} # 清理指定 RID 的解决方案
+      run: dotnet clean src/Lively.sln --configuration Release -r ${{ matrix.rid }} # 清理指定 RID 的解决方案
 
     - name: Build solution ${{ matrix.rid }}
-      run: dotnet build src/Lively/Lively.sln --no-restore --configuration Release -r ${{ matrix.rid }} # 构建指定 RID 的解决方案
+      run: dotnet build src/Lively.sln --no-restore --configuration Release -r ${{ matrix.rid }} # 构建指定 RID 的解决方案
 
     - name: Upload build artifacts ${{ matrix.rid }}
       uses: actions/upload-artifact@v4 # 上传编译结果
