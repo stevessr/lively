@@ -1,15 +1,41 @@
-name: Manual Build
+name: Manual Build Multi-Platform
 
 on:
   workflow_dispatch # 允许手动触发 workflow
 
 jobs:
   build:
-    runs-on: windows-latest # 在最新的 Windows 环境中运行
+    runs-on: ${{ matrix.os }} # 在矩阵中指定的操作系统环境中运行
 
     strategy:
       matrix:
-        platform: [x86, x64, arm64] # 定义需要编译的平台
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        arch: [x64, arm64]
+        include:
+          # Windows builds
+          - os: windows-latest
+            arch: x86
+            rid: win-x86
+          - os: windows-latest
+            arch: x64
+            rid: win-x64
+          - os: windows-latest
+            arch: arm64
+            rid: win-arm64
+          # Linux builds
+          - os: ubuntu-latest
+            arch: x64
+            rid: linux-x64
+          - os: ubuntu-latest
+            arch: arm64
+            rid: linux-arm64
+          # macOS builds
+          - os: macos-latest
+            arch: x64
+            rid: osx-x64
+          - os: macos-latest
+            arch: arm64
+            rid: osx-arm64
 
     steps:
     - name: Checkout code
@@ -18,19 +44,19 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4 # 安装 .NET SDK
       with:
-        dotnet-version: '8.x' # 使用 .NET 8 LTS 版本
+        dotnet-version: '9.x' # 使用 .NET 9 版本
 
     - name: Restore dependencies
       run: dotnet restore src/Lively/Lively.sln # 恢复项目依赖
 
-    - name: Clean solution ${{ matrix.platform }}
-      run: dotnet clean src/Lively/Lively.sln --configuration Release -p:Platform=${{ matrix.platform }} # 清理指定平台的解决方案
+    - name: Clean solution ${{ matrix.rid }}
+      run: dotnet clean src/Lively/Lively.sln --configuration Release -r ${{ matrix.rid }} # 清理指定 RID 的解决方案
 
-    - name: Build solution ${{ matrix.platform }}
-      run: dotnet build src/Lively/Lively.sln --no-restore --configuration Release -p:Platform=${{ matrix.platform }} # 构建指定平台的解决方案
+    - name: Build solution ${{ matrix.rid }}
+      run: dotnet build src/Lively/Lively.sln --no-restore --configuration Release -r ${{ matrix.rid }} # 构建指定 RID 的解决方案
 
-    - name: Upload build artifacts ${{ matrix.platform }}
+    - name: Upload build artifacts ${{ matrix.rid }}
       uses: actions/upload-artifact@v4 # 上传编译结果
       with:
-        name: lively-build-outputs-${{ matrix.platform }} # Artifact 名称包含平台信息
-        path: src/Lively/*/bin/Release/ # 编译结果路径
+        name: lively-build-outputs-${{ matrix.rid }} # Artifact 名称包含 RID
+        path: src/Lively/*/bin/Release/**/${{ matrix.rid }}/ # 编译结果路径 for each project and RID
